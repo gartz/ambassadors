@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>AmbassadorS</title>
+    <link>https://jkawamoto.github.io/ambassadors/</link>
+    <description>Recent content on AmbassadorS</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 11 Aug 2016 15:06:48 -0400</lastBuildDate>
+    <atom:link href="https://jkawamoto.github.io/ambassadors/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title></title>
+      <link>https://jkawamoto.github.io/ambassadors/README/</link>
+      <pubDate>Thu, 11 Aug 2016 15:06:48 -0400</pubDate>
+      
+      <guid>https://jkawamoto.github.io/ambassadors/README/</guid>
+      <description>
+
+&lt;p&gt;&lt;a href=&#34;LICENSE&#34;&gt;&lt;img src=&#34;https://img.shields.io/badge/license-MIT-blue.svg?style=flat&#34; alt=&#34;MIT License&#34; /&gt;&lt;/a&gt;
+&lt;a href=&#34;https://hub.docker.com/r/jkawamoto/ambassadors/&#34;&gt;&lt;img src=&#34;https://img.shields.io/badge/dockerhub-jkawamoto%2Fambassadors-blue.svg&#34; alt=&#34;Dockerhub&#34; /&gt;&lt;/a&gt;
+&lt;a href=&#34;https://hub.docker.com/r/jkawamoto/rpi-ambassadors/&#34;&gt;&lt;img src=&#34;https://img.shields.io/badge/dockerhub-jkawamoto%2Frpi--ambassadors-blue.svg&#34; alt=&#34;Dockerhub&#34; /&gt;&lt;/a&gt;
+&lt;a href=&#34;http://microbadger.com/images/jkawamoto/ambassadors&#34;&gt;&lt;img src=&#34;https://images.microbadger.com/badges/image/jkawamoto/ambassadors.svg&#34; alt=&#34;Image information&#34; /&gt;&lt;/a&gt;
+&lt;a href=&#34;https://github.com/jkawamoto/ambassadors/releases/tag/v1.0.0&#34;&gt;&lt;img src=&#34;https://img.shields.io/badge/release-1.0.0-brightgreen.svg&#34; alt=&#34;Release&#34; /&gt;&lt;/a&gt;
+&lt;a href=&#34;http://qiita.com/jkawamoto/items/4b87d0f61ab3fbbd2897&#34;&gt;&lt;img src=&#34;https://img.shields.io/badge/qiita-%E6%97%A5%E6%9C%AC%E8%AA%9E-brightgreen.svg&#34; alt=&#34;Japanese&#34; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Yet another &lt;a href=&#34;https://docs.docker.com/engine/admin/ambassador_pattern_linking/&#34;&gt;Ambassador pattern&lt;/a&gt; over SSH.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;img/secure-link.png&#34; alt=&#34;Secure link&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;install:04c6e90faac2675aa89e2176d2eec7d8&#34;&gt;Install&lt;/h2&gt;
+
+&lt;p&gt;You can pull a built container.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ docker pull jkawamoto/ambassadors
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If you are running on Raspberry Pi, you can pull it instead.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ docker pull jkawamoto/rpi-ambassadors
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;usage:04c6e90faac2675aa89e2176d2eec7d8&#34;&gt;Usage&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;$ docker run -dt jkawamoto/ambassadors (server|client|tunnel) [-v]
+
+Options:
+  -v           Verbose mode for debugging.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;AmbassadorS has three modes; server, client, and tunnel.
+Those modes are associated as follows.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;(a container) ---&amp;gt; (AmbassadorS client) ---&amp;gt; (AmbassadorS tunnel)
+              == ssh ==&amp;gt; (AmbassadorS server) ---&amp;gt; (service containers)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You need one server-mode container on a host which has containers to be linked, i.e. &lt;em&gt;service containers&lt;/em&gt;,
+and one tunnel-mode container on each &amp;ldquo;client&amp;rdquo; host.
+You also need client-mode containers for every linking container.&lt;/p&gt;
+
+&lt;h2 id=&#34;example:04c6e90faac2675aa89e2176d2eec7d8&#34;&gt;Example&lt;/h2&gt;
+
+&lt;p&gt;Suppose you have MySQL and MongoDB containers on host &lt;em&gt;A&lt;/em&gt;, and a container on host &lt;em&gt;B&lt;/em&gt; wants to link them,
+you firstly need to run a server-mode container linking the MySQL and MongoDB containers on host &lt;em&gt;A&lt;/em&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ docker run -d --name ambassadors_server \
+             -v ~/.ssh/:/data/ -p 10022:22 \
+             --link mongo:mongo --link mysql:mysql \
+             jkawamoto/ambassadors server
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The server-mode container requires &lt;code&gt;authorized_keys&lt;/code&gt; in &lt;code&gt;/data/&lt;/code&gt; and to expose port &lt;code&gt;22&lt;/code&gt; for sshd.
+In this example, &lt;code&gt;authorized_keys&lt;/code&gt; of host &lt;em&gt;A&lt;/em&gt; will be used from the server-mode container.
+The server-mode container also needs to link service containers.
+In this case, it links to containers named mongo and mysql.&lt;/p&gt;
+
+&lt;p&gt;On host &lt;em&gt;B&lt;/em&gt;, you need to run a tunnel-mode container.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ docker run -dt --name ambassadors_tunnel \
+            -v ~/.ssh:/root/.ssh -e PORT=10022 -e HOST=&amp;lt;host a&amp;gt; \
+            jkawamoto/ambassadors tunnel
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The environment variable &lt;code&gt;HOST&lt;/code&gt; is the address for host &lt;em&gt;A&lt;/em&gt; and &lt;code&gt;PORT&lt;/code&gt; is specified the port number of sshd.
+The tunnel-mode container requires a private key of which the related public key &lt;code&gt;id_rsa&lt;/code&gt; is included in the &lt;code&gt;authorized_keys&lt;/code&gt; put on the server-mode container.
+The private key needs to be put in &lt;code&gt;/root/.ssh&lt;/code&gt;.
+In this example, &lt;code&gt;id_rsa&lt;/code&gt; of host &lt;em&gt;B&lt;/em&gt; will be used from the tunnel-mode container.&lt;/p&gt;
+
+&lt;p&gt;You also need to run client-mode containers for MySQL and MongoDB.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ docker run -d --name mysql_ambassadors \
+             --link ambassadors_tunnel:tunnel --expose 3306 -e PORT=3306 \
+             jkawamoto/ambassadors client
+$ docker run -d --name mongo_ambassadors \
+             --link ambassadors_tunnel:tunnel --expose 27017 -e PORT=27017 \
+             jkawamoto/ambassadors client
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Those client-mode containers must link the tunnel-mode container with name &lt;code&gt;tunnel&lt;/code&gt; and expose as same port as service containers expose.
+In this case, the client-mode container for MySQL exposes &lt;code&gt;3306&lt;/code&gt; while the mysql container exposes &lt;code&gt;3306&lt;/code&gt;.
+Those client-mode containers also need to set environment variable &lt;code&gt;PORT&lt;/code&gt; as the exposed port number.&lt;/p&gt;
+
+&lt;p&gt;Finally, you can use MySQL and MongoDB running on host &lt;em&gt;A&lt;/em&gt; from host &lt;em&gt;B&lt;/em&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ docker run -d --link mysql_ambassadors:mysql --link mongo_ambassadors:mongo some-app
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;license:04c6e90faac2675aa89e2176d2eec7d8&#34;&gt;License&lt;/h1&gt;
+
+&lt;p&gt;This software is released under the MIT License, see &lt;a href=&#34;LICENSE&#34;&gt;LICENSE&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
